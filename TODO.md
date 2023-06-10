@@ -1,3 +1,2 @@
 - Usar el DNS configurado en la máquina
-- Argumentos de entrada
 - Registros MX
