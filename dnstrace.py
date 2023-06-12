@@ -47,10 +47,10 @@ def trace(fqdn: str, dns_address: str) -> None:
     trace_string += divider(f'FQDN: {fqdn}')
 
     #######################################################################
-    # Obtener registros NS para el TLD usando el solucionador DNS inicial #
+    # Obtener registros NS de los servidores root usando el solucionador DNS inicial #
     #######################################################################
     
-    query = split_fqdn[-1]      # TLD
+    query = "."
     dns_answer = resolve_dns(query, dns_address, "NS", True)
 
     if dns_answer is None or dns_answer.ancount == 0:
@@ -77,9 +77,9 @@ def trace(fqdn: str, dns_address: str) -> None:
     # Buscar iterativamente el FQDN a partir del servidor TLD elegido #
     ###################################################################
 
-    # Genera una lista de la forma ["d1.tld", "d2.d1.tld", "d3.d2.d1.tld", ...] a partir del fqdn
+    # Genera una lista de la forma ["tld", "d1.tld", "d2.d1.tld", ...] a partir del fqdn
     query_list = []
-    for i in list(reversed(range(len(split_fqdn) - 1))):
+    for i in list(reversed(range(len(split_fqdn)))):
         query_list.append(".".join(split_fqdn[i:]))
     query_list.pop()
 
