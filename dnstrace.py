@@ -17,7 +17,7 @@ def main():
 
     resolver_address: str = get_main_nameserver()
 
-    if resolver_address is None or test_resolver == False:
+    if resolver_address is None or test_resolver(resolver_address) == False:
         resolver_address = FALLBACK_DNS
 
     try:
@@ -39,57 +39,25 @@ def trace(fqdn: str, dns_address: str) -> None:
         dns_address (str): Dirección IPv4 del solucionador DNS inicial
     """
 
-    trace_string: str = ""
-
     split_fqdn: list[str] = fqdn.split(".")
     split_fqdn[-1] += "."
 
-    index_list = list(reversed(range(len(split_fqdn))))
-    if len(index_list) > 0:
-        index_list.pop()
+    trace_string: str = divider(f'FQDN: {fqdn}')
 
-    trace_string += divider(f'FQDN: {fqdn}')
-
-    ##################################################################################
-    # Obtener registros NS de los servidores root usando el solucionador DNS inicial #
-    ##################################################################################
-
-    query = "."
-    dns_answer = resolve_dns(query, dns_address, "NS", True)
-
-    if dns_answer is None or dns_answer.ancount == 0:
-        print(f'No NS records found for query "{query}"')
-        return None
-
-    ns_records = parse_ns_records(dns_answer, dns_address)
-
-    if len(ns_records) == 0:
-        print(f'No NS records found for query "{query}"')
-        return None
-
-    # Concatenar los resultados a la string de salida
-    for _, v in ns_records.items():
-        trace_string += f'{v["rrname"]:10s} {v["rclass"]:10s} {v["rtype"]:10s} {v["rdata"]:30s} {v["a_record"]:10s}\n'
-
-    trace_string += divider(f'Response from {dns_address}')
-
-    # Seleccionar un servidor TLD aleatoriamente
-    next_ns_fqdn: str = random.choice(list(ns_records.keys()))
-    next_ns_address: str = ns_records[next_ns_fqdn]["a_record"]
-
-    ###################################################################
-    # Buscar iterativamente el FQDN a partir del servidor TLD elegido #
-    ###################################################################
-
-    # Genera una lista de la forma ["tld", "d1.tld", "d2.d1.tld", ...] a partir del fqdn
-    query_list = []
+    # Genera una lista de la forma [".", "tld", "d1.tld", "d2.d1.tld", ...] a partir del fqdn
+    query_list = ["."]
     for i in list(reversed(range(len(split_fqdn)))):
         query_list.append(".".join(split_fqdn[i:]))
 
+    next_ns_fqdn: str = ""
+    next_ns_address = dns_address
+
     for qname in query_list:
 
+        recursive_lookup = qname == "." # Consulta recursiva solo en la primera iteración
+        
         # Obtener los registros NS para la query actual
-        dns_answer = resolve_dns(qname, next_ns_address, "NS", False)
+        dns_answer = resolve_dns(qname, next_ns_address, "NS", recursive_lookup)
 
         ns_records = parse_ns_records(dns_answer, dns_address)
 
@@ -98,7 +66,7 @@ def trace(fqdn: str, dns_address: str) -> None:
 
         # Concatenar los resultados a la string de salida
         for _, v in ns_records.items():
-            trace_string += f'{v["rrname"]:10s} {v["rclass"]:10s} {v["rtype"]:10s} {v["rdata"]:30s} {v["a_record"]:10s}\n'
+            trace_string += f'{v["rrname"]:20s} {v["rclass"]:5s} {v["rtype"]:5s} {v["rdata"]:30s} {v["a_record"]:10s}\n'
 
         trace_string += divider(
             f'Response from {next_ns_address} ({next_ns_fqdn})')
@@ -106,7 +74,9 @@ def trace(fqdn: str, dns_address: str) -> None:
         next_ns_fqdn: str = random.choice(list(ns_records.keys()))
         next_ns_address: str = ns_records[next_ns_fqdn]["a_record"]
 
-    # Obtener todos los RR para el FQDN a partir del nameserver autoritativo
+    
+    # Obtener los RR para el FQDN a partir del nameserver autoritativo
+
     query = ".".join(split_fqdn)
     dns_answer = resolve_dns(query, next_ns_address, "A", False)
 
@@ -118,7 +88,7 @@ def trace(fqdn: str, dns_address: str) -> None:
         if type(record_data) == bytes:
             record_data = record_data.decode("utf-8")
 
-        trace_string += f'{query:10s} {record_class:10s} {record_type:10s} {record_data:10s}\n'
+        trace_string += f'{query:20s} {record_class:5s} {record_type:10s} {record_data:30s}\n'
 
     trace_string += divider(
         f'Response from {next_ns_address} ({next_ns_fqdn})')
