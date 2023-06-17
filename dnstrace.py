@@ -25,7 +25,7 @@ def main():
         fqdn = args.fqdn
         test_fqdn_tld(fqdn, resolver_address)
     except ValueError as ex1:
-        print(f'ERROR: {str(ex1)}', file=sys.stderr)
+        print(f'{str(ex1)}', file=sys.stderr)
         sys.exit(1)
 
     trace(fqdn, resolver_address)
@@ -237,7 +237,7 @@ def validate_args(args: object) -> None:
         ValueError: Si el argumento no es válido
     """
     if is_valid_fqdn_syntax(args.fqdn) is False:
-        raise ValueError(f'Value {args.fqdn} is not a valid FQDN string.')
+        raise ValueError(f'Value {args.fqdn} is not a valid FQDN')
 
 
 def is_valid_fqdn_syntax(value: str) -> bool:
@@ -269,7 +269,7 @@ def test_fqdn_tld(fqdn: str, resolver_address: str):
     dns_answer = resolve_dns(tld, resolver_address, "NS", True)
 
     if dns_answer.ancount == 0:
-        raise ValueError("FQDN no válido")
+        raise ValueError("Nonexisting FQDN")
 
 
 def get_main_nameserver() -> any:
