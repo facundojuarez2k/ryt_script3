@@ -1,2 +1,0 @@
-- Usar el DNS configurado en la máquina
-- Registros MX
