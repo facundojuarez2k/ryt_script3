@@ -60,6 +60,10 @@ def trace(fqdn: str, dns_address: str) -> None:
         # Obtener los registros NS para la query actual
         dns_answer = resolve_dns(qname, next_ns_address, "NS", recursive_lookup)
 
+        if dns_answer is None:
+            print("Request timeout")
+            return None
+
         ns_records = parse_ns_records(dns_answer, dns_address)
 
         if len(ns_records) == 0:
@@ -79,6 +83,10 @@ def trace(fqdn: str, dns_address: str) -> None:
     # Obtener los RR para el FQDN a partir del nameserver autoritativo
     query = ".".join(split_fqdn)
     dns_answer = resolve_dns(query, next_ns_address, "A", False)
+
+    if dns_answer is None:
+        print("Request timeout")
+        return None
 
     if (dns_answer.ancount > 0):
         for x in range(dns_answer.ancount):
