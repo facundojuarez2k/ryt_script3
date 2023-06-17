@@ -1,6 +1,3 @@
-from scapy.layers.dns import dnstypes, dnsclasses
-from scapy.all import IP, UDP, DNS, DNSQR
-import scapy.all as scapy
 import random
 import argparse
 import re
@@ -8,7 +5,10 @@ import sys
 import logging
 # Suprimir warnings en stdout
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
+import scapy.all as scapy
+from scapy.all import IP, UDP, DNS, DNSQR
 # Importar diccionario de DNS record types y classes
+from scapy.layers.dns import dnstypes, dnsclasses
 
 FALLBACK_DNS = "8.8.8.8"
 
@@ -50,9 +50,9 @@ def trace(fqdn: str, dns_address: str) -> None:
 
     trace_string += divider(f'FQDN: {fqdn}')
 
-    #######################################################################
+    ##################################################################################
     # Obtener registros NS de los servidores root usando el solucionador DNS inicial #
-    #######################################################################
+    ##################################################################################
 
     query = "."
     dns_answer = resolve_dns(query, dns_address, "NS", True)
@@ -130,7 +130,7 @@ def resolve_dns(query: str, dns_address: str, record_type: str, recursive_lookup
     """Retorna la respuesta de Scapy para una consulta directa a un servidor DNS
 
     Args:
-        query (str): String con la string a consultar
+        query (str): Consulta a realizar
         dns_address (str): Dirección IPv4 del servidor DNS a consultar
         record_type (str): Tipo de registro DNS
         recursive_lookup (bool, optional): Determina si la busqueda debe hacerse recursivamente. Default: False.
