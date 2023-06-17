@@ -85,7 +85,6 @@ def trace(fqdn: str, dns_address: str) -> None:
     query_list = []
     for i in list(reversed(range(len(split_fqdn)))):
         query_list.append(".".join(split_fqdn[i:]))
-    query_list.pop()
 
     for qname in query_list:
 
@@ -98,7 +97,7 @@ def trace(fqdn: str, dns_address: str) -> None:
             break
 
         # Concatenar los resultados a la string de salida
-        for k, v in ns_records.items():
+        for _, v in ns_records.items():
             trace_string += f'{v["rrname"]}    {v["rclass"]}    {v["rtype"]}    {v["rdata"]}    {v["a_record"]}\n'
 
         trace_string += divider(
@@ -214,7 +213,7 @@ def parse_ns_records(dns_answer: any, resolver_address: str) -> dict:
     for k, v in list(output.items()):
         if v["a_record"] is None:
             dns_answer = resolve_dns(k, resolver_address, "A", True)
-            ip_address = dns_answer.an[0].rdata if dns_answer.ancount > 0 else None
+            ip_address = dns_answer.an[0].rdata if (dns_answer.ancount > 0 and dns_answer[0] is not None) else None
             if ip_address is None:  # No se encontraron registros A para el NS
                 output.pop(k)       # Eliminarlo del diccionario
             else:
