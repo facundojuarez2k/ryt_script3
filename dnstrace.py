@@ -80,20 +80,24 @@ def trace(fqdn: str, dns_address: str) -> None:
     query = ".".join(split_fqdn)
     dns_answer = resolve_dns(query, next_ns_address, "A", False)
 
-    for x in range(dns_answer.ancount):
-        record_type = dnstypes[dns_answer.an[x].type]
-        record_class = dnsclasses[dns_answer.an[x].rclass]
+    if (dns_answer.ancount > 0):
+        for x in range(dns_answer.ancount):
+            record_type = dnstypes[dns_answer.an[x].type]
+            record_class = dnsclasses[dns_answer.an[x].rclass]
 
-        record_data = dns_answer.an[x].rdata
-        if type(record_data) == bytes:
-            record_data = record_data.decode("utf-8")
+            record_data = dns_answer.an[x].rdata
+            if type(record_data) == bytes:
+                record_data = record_data.decode("utf-8")
 
-        trace_string += f'{query:20s} {record_class:5s} {record_type:10s} {record_data:30s}\n'
+            trace_string += f'{query:20s} {record_class:5s} {record_type:10s} {record_data:30s}\n'
 
-    trace_string += divider(
-        f'Response from {next_ns_address} ({next_ns_fqdn})')
-
-    print(trace_string)
+        trace_string += divider(
+            f'Response from {next_ns_address} ({next_ns_fqdn})')
+        
+        print(trace_string)
+    else:
+        print(f'No A or CNAME records found for {query}')
+    
 
 def resolve_dns(query: str, dns_address: str, record_type: str, recursive_lookup: bool = False, record_class: str = "IN") -> any:
     """Retorna la respuesta de Scapy para una consulta directa a un servidor DNS
