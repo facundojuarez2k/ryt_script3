@@ -68,8 +68,8 @@ def trace(fqdn: str, dns_address: str) -> None:
         return None
 
     # Concatenar los resultados a la string de salida
-    for k, v in ns_records.items():
-        trace_string += f'{v["rrname"]}    {v["rclass"]}    {v["rtype"]}    {v["rdata"]}    {v["a_record"]}\n'
+    for _, v in ns_records.items():
+        trace_string += f'{v["rrname"]:10s} {v["rclass"]:10s} {v["rtype"]:10s} {v["rdata"]:30s} {v["a_record"]:10s}\n'
 
     trace_string += divider(f'Response from {dns_address}')
 
@@ -98,7 +98,7 @@ def trace(fqdn: str, dns_address: str) -> None:
 
         # Concatenar los resultados a la string de salida
         for _, v in ns_records.items():
-            trace_string += f'{v["rrname"]}    {v["rclass"]}    {v["rtype"]}    {v["rdata"]}    {v["a_record"]}\n'
+            trace_string += f'{v["rrname"]:10s} {v["rclass"]:10s} {v["rtype"]:10s} {v["rdata"]:30s} {v["a_record"]:10s}\n'
 
         trace_string += divider(
             f'Response from {next_ns_address} ({next_ns_fqdn})')
@@ -118,7 +118,7 @@ def trace(fqdn: str, dns_address: str) -> None:
         if type(record_data) == bytes:
             record_data = record_data.decode("utf-8")
 
-        trace_string += f'{query}     {record_class}      {record_type}      {record_data}\n'
+        trace_string += f'{query:10s} {record_class:10s} {record_type:10s} {record_data:10s}\n'
 
     trace_string += divider(
         f'Response from {next_ns_address} ({next_ns_fqdn})')
@@ -319,9 +319,9 @@ def test_resolver(resolver_address: str) -> bool:
 
 
 def divider(content: str) -> str:
-    string = "-------------------------------------------------------\n"
+    string = ("-" * 80) + "\n"
     string += f'{content}\n'
-    string += "-------------------------------------------------------\n"
+    string += ("-" * 80) + "\n"
     return string
 
 if __name__ == "__main__":
