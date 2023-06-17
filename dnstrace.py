@@ -39,6 +39,7 @@ def trace(fqdn: str, dns_address: str) -> None:
         dns_address (str): Dirección IPv4 del solucionador DNS inicial
     """
 
+    fqdn = fqdn.strip(".")
     split_fqdn: list[str] = fqdn.split(".")
     split_fqdn[-1] += "."
 
@@ -71,12 +72,11 @@ def trace(fqdn: str, dns_address: str) -> None:
         trace_string += divider(
             f'Response from {next_ns_address} ({next_ns_fqdn})')
 
+        # Seleccionar el siguiente nameserver a consultar de forma aleatoria
         next_ns_fqdn: str = random.choice(list(ns_records.keys()))
         next_ns_address: str = ns_records[next_ns_fqdn]["a_record"]
 
-    
     # Obtener los RR para el FQDN a partir del nameserver autoritativo
-
     query = ".".join(split_fqdn)
     dns_answer = resolve_dns(query, next_ns_address, "A", False)
 
@@ -137,11 +137,11 @@ def parse_ns_records(dns_answer: any, resolver_address: str) -> dict:
     output = {}
 
     if dns_answer.qdcount == 0:
-        # Query incompleta ?
         return output
 
     query_name = dns_answer.qd[0].qname.decode("utf-8")
 
+    # Obtener los registros NS desde la propiedad ns de la respuesta de Scapy
     for x in range(dns_answer.nscount):
 
         record_name = dns_answer.ns[x].rrname.decode("utf-8")
@@ -161,6 +161,7 @@ def parse_ns_records(dns_answer: any, resolver_address: str) -> dict:
             "a_record": None
         }
 
+    # Obtener los registros NS desde la propiedad an de la respuesta de Scapy
     for x in range(dns_answer.ancount):
         record_name = dns_answer.an[x].rrname.decode("utf-8")
         record_type = dnstypes[dns_answer.an[x].type]
@@ -181,9 +182,15 @@ def parse_ns_records(dns_answer: any, resolver_address: str) -> dict:
 
     # Iterar sobre el diccionario generado agregando una direccion IP a cada registro NS
     for k, v in list(output.items()):
+        
         if v["a_record"] is None:
+            
             dns_answer = resolve_dns(k, resolver_address, "A", True)
-            ip_address = dns_answer.an[0].rdata if (dns_answer.ancount > 0 and dns_answer[0] is not None) else None
+            ip_address = None
+            
+            if dns_answer is not None and dns_answer.ancount > 0 and dns_answer[0] is not None:
+                ip_address = dns_answer.an[0].rdata
+            
             if ip_address is None:  # No se encontraron registros A para el NS
                 output.pop(k)       # Eliminarlo del diccionario
             else:
@@ -196,7 +203,7 @@ def parse_args() -> object:
     """Captura y retorna los argumentos del programa
 
     Returns:
-        object: arguments
+        object: argumentos
     """
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -255,8 +262,9 @@ def test_fqdn_tld(fqdn: str, resolver_address: str):
 
 def get_main_nameserver() -> any:
     """Retorna el primer nameserver del archivo /etc/resolv.conf
+    
     Returns:
-        any: Dirección IP del nameserver o None en caso de que no exista un valor
+        any: Dirección IP del nameserver o None en caso de que el archivo no contenga un valor
     """
     ns_list = []
     try:
@@ -276,7 +284,7 @@ def get_main_nameserver() -> any:
 
 
 def test_resolver(resolver_address: str) -> bool:
-    """Verifica que el cliente DNS del argumento funcione correctamente.
+    """Verifica que el cliente DNS pasado como parámetro funcione correctamente.
 
     Args:
         resolver_address (str): Dirección IPv4 del solucionador
