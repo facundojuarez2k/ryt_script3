@@ -24,7 +24,7 @@ def main():
         args = parse_args()
         fqdn = args.fqdn
         test_fqdn_tld(fqdn, resolver_address)
-    except ValueError as ex1:
+    except Exception as ex1:
         print(f'{str(ex1)}', file=sys.stderr)
         sys.exit(1)
 
@@ -267,6 +267,9 @@ def test_fqdn_tld(fqdn: str, resolver_address: str):
     """
     tld = fqdn.split(".")[-1] + "."
     dns_answer = resolve_dns(tld, resolver_address, "NS", True)
+
+    if dns_answer is None:
+        raise Exception("Request timeout")
 
     if dns_answer.ancount == 0:
         raise ValueError("Nonexisting FQDN")
